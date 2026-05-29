@@ -143,9 +143,6 @@ if (p_lr < 0.05) {
 # ============================================================
 
 # ---- 8. 绘制KM曲线 ------------------------------------------
-# 输出到PDF（正式报告用）
-pdf("Figure1_KM_curve.pdf", width = 8, height = 6)
-
 # 设置画布——上方留出绘图区域，下方留出number-at-risk表格空间
 par(mar = c(8, 5, 4, 2))
 
@@ -206,7 +203,6 @@ mtext(side = 1, line = 4.8, at = -8, text = "Lev+5FU", cex = 0.8,
 mtext(side = 1, line = 6.2, at = -8, text = "No. at risk:", cex = 0.8,
       adj = 0)
 
-dev.off()
 cat("\nFigure 1 已保存：Figure1_KM_curve.pdf\n")
 
 cat("\n=== 3-C 完成 ===\n")
