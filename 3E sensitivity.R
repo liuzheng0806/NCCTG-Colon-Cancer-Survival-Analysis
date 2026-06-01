@@ -92,9 +92,14 @@ cat("  三个HR几乎重合 → 主结论对分层选择、缺失剔除均稳健
 # ============================================================
 # 第一部分：主分析模型 + 基线累积风险 H0(t)
 # ============================================================
-# 个体线性预测值 lp = beta'X；exp(lp) 为相对风险乘子
-lp <- predict(cox_primary, type = "lp")
-lp[is.na(lp)] <- 0               # 被剔除的12人 lp 补 0
+# 手动对齐:predict 只返回参与拟合的 607 个 lp(带行名),
+# 按行名映射回 adtte 的 619 行,缺失者自动为 NA
+lp_fit <- predict(cox_primary, type = "lp")      # 长度 607,有 names
+lp <- rep(NA_real_, nrow(adtte))                 # 先建 619 个 NA
+names(lp) <- rownames(adtte)
+lp[names(lp_fit)] <- lp_fit                       # 按行名填回
+stopifnot(length(lp) == nrow(adtte))             # 619 == 619,应通过
+# nodes 缺失的 12 人 lp=NA、node4=NA,impute_once 中会被 next 跳过
 
 # 基线累积风险 H0(t)：按 node4 分层各有一条
 # basehaz 返回 hazard(累积)、time、strata 三列
