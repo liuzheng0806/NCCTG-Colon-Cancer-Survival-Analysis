@@ -1,86 +1,64 @@
-# ============================================================
+r# ============================================================
 # 项目：NCCTG结肠癌辅助化疗试验 生存分析复盘
 # 脚本：3-A 环境搭建 + 数据加载 + ITT人群构造
 # 数据来源：survival::colon (R package)
 # 对应SAP章节：§3 Study Design, §4 Analysis Populations
 # ============================================================
-
 # ---- 0. 环境准备 --------------------------------------------
-
 # 清空工作环境，保证可重复性
 rm(list = ls())
-
 # 记录R版本（对应SAP §9 Software & Reproducibility）
 # 在真实SAP里这个版本号要写死
 cat("R version:\n")
 print(R.version.string)
-
 # 加载必要包
 # 只依赖 survival（base R），避免额外依赖
 library(survival)
-
 cat("\nsurvival 包版本:", as.character(packageVersion("survival")), "\n")
-
-
 # ---- 1. 加载原始数据 ----------------------------------------
-
 # colon数据集说明：
 #   - 每个患者有2行，由etype区分：
-#     etype = 1: recurrence（复发事件）→ 我们用这个构造RFS
-#     etype = 2: death（死亡事件）      → 本项目不用，留作OS备用
+#     etype = 1: recurrence（复发事件行）
+#     etype = 2: death（死亡事件行）
+#   - 真 RFS 终点 = 复发 或 全因死亡，先发生者；需合并这两行构造（见第1节末）
 #   - 治疗组rx：Obs / Lev / Lev+5FU（三臂）
-
 data(cancer, package = "survival")  # colon在cancer里
-
 # 核查原始数据结构
 cat("\n=== 原始数据结构 ===\n")
 cat("总行数（应为929患者×2行 = 1858）:", nrow(colon), "\n")
 cat("变量列表:\n")
 print(names(colon))
-
 cat("\n治疗组×etype 分布（原始三臂）:\n")
 print(table(colon$rx, colon$etype,
             dnn = c("治疗组", "etype(1=recurrence,2=death)")))
-## ===== 真 RFS 数据集构造(修正版)=====
-## 放在读入 colon 之后
-
-rec   <- colon[colon$etype == 1, ]
-death <- colon[colon$etype == 2, ]
+# ===== 真 RFS 终点构造：合并 etype 两行 =====
+# 关键：RFS = recurrence OR all-cause death，先发生者。
+#   - 只取 etype==1 单行 会把"无复发即死亡"错当删失 → 得到 time-to-recurrence，
+#     而非 RFS。本项目曾踩此坑并修正，这里显式合并两行。
+rec   <- colon[colon$etype == 1, ]   # 每患者的复发行
+death <- colon[colon$etype == 2, ]   # 每患者的死亡行
 rec   <- rec[order(rec$id), ]
 death <- death[order(death$id), ]
-stopifnot(all(rec$id == death$id))
-
-rfs <- rec  # 骨架:协变量、rx、id 都来自复发行
-
-# 真 RFS 事件 = 复发 或 死亡(任一发生)
+stopifnot(all(rec$id == death$id))   # 两行 id 必须一一对应
+rfs <- rec  # 以复发行为骨架（协变量、rx、id 都在这一行）
+# 事件指示：复发(rec$status==1) 或 死亡(death$status==1) 任一发生即为事件
 rfs$status <- as.integer(rec$status == 1 | death$status == 1)
-
-# 真 RFS 时间:
-#   复发者(rec$status==1)→ 复发时间 rec$time
-#   未复发者(rec$status==0)→ 用 death 行时间(死亡或删失都在 death$time)
+# 事件/删失时间：
+#   复发者 → 取复发时间 rec$time
+#   未复发者 → 取 death 行时间（死亡时间，或无事件时的随访删失时间）
 rfs$time <- ifelse(rec$status == 1, rec$time, death$time)
-
-# ===== 核对(全三臂)=====
+# 核对（全三臂）：RFS 事件应为 Obs 190 / Lev 182 / Lev+5FU 134
 cat("三臂真RFS事件:\n"); print(table(rfs$rx, rfs$status))
-
-
 # ---- 2. 构造ITT分析数据集 -----------------------------------
 # 对应SAP §4：ITT Population
 # 规则：
-#   (a) 只保留recurrence事件行（etype == 1）
-#   (b) 只保留Obs和Lev+5FU两个臂（剔除Lev单药组）
-#   (c) 按SAP预先指定，Obs为参照组
-
-# (a) + (b) 过滤
-#adtte <- colon[colon$etype == 1 &
-#                 colon$rx %in% c("Obs", "Lev+5FU"), ]
+#   (a) 数据来自上面合并好的真 RFS（rfs），不是原始单行
+#   (b) 只保留 Obs 和 Lev+5FU 两个臂（剔除 Lev 单药组）
+#   (c) 按SAP预先指定，Obs 为参照组
+# (b) 在合并后的 rfs 上筛两臂
 adtte <- rfs[rfs$rx %in% c("Obs", "Lev+5FU"), ]
-
 # (c) 显式设定因子水平和参照组
-#     第一个水平 = Cox参照组
-#     Obs在前 → HR解读为"Lev+5FU相对于Obs的风险比"
-#adtte$rx <- factor(adtte$rx, levels = c("Obs", "Lev+5FU"))
-
+#     第一个水平 = Cox参照组；Obs在前 → HR解读为"Lev+5FU相对于Obs的风险比"
 adtte$rx <- factor(adtte$rx, levels = c("Obs", "Lev+5FU"))
 
 # 派生变量1：node4（是否>4个阳性淋巴结）
