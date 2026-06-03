@@ -164,7 +164,7 @@ xlim <- c(0.2, 2.0)   # HR范围(对数轴)
 
 plot(NA, xlim = xlim, ylim = c(n_all, 1), log = "x",
      xlab = "Hazard Ratio (Lev+5FU vs Obs)", ylab = "",
-     yaxt = "n", main = "Figure 2. Subgroup Analysis (Forest Plot)")
+     yaxt = "n")#, main = "Figure 2. Subgroup Analysis (Forest Plot)")
 
 # HR=1 无效应线
 abline(v = 1, lty = 2, col = "gray40")
