@@ -111,7 +111,7 @@ cat(sprintf("GLOBAL检验 p = %.4f\n", global_p))
 if (global_p >= 0.05) {
   cat("结论：GLOBAL检验未拒绝PH假设。\n")
   cat("      主分析Cox模型的比例风险假设大致成立，\n")
-  cat("      HR=0.59可解释为整个随访期内恒定的风险比。\n")
+  cat("      HR=0.62可解释为整个随访期内恒定的风险比。\n")
 } else {
   cat("结论：GLOBAL检验拒绝PH假设，需逐变量排查。\n")
   cat("      若违反来自治疗变量rx，主分析HR应解释为\n")
@@ -125,7 +125,7 @@ cat("\n=== 治疗变量rx的PH检验（最关键）===\n")
 cat(sprintf("rx 的 PH检验 p = %.4f\n", p_rx))
 if (p_rx >= 0.05) {
   cat("治疗效应的比例风险假设成立——\n")
-  cat("HR=0.59是对治疗效应的恰当总结。\n")
+  cat("HR=0.62是对治疗效应的恰当总结。\n")
 } else {
   cat("治疗效应可能随时间变化——\n")
   cat("需在CSR中说明，并参考RMST敏感性分析。\n")
