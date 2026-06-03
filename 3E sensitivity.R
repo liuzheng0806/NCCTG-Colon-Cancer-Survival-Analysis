@@ -6,23 +6,23 @@
 #
 # ⚠️ 重要说明：
 #   SA-1、SA-2 使用base R，已实测验证。
-#   SA-3 delta-adjusted 逆变换插补。
+#   SA-3 base R 自实现 delta-adjusted 删失插补。
 # ============================================================
 
-#rm(list = ls())
-#library(survival)
+rm(list = ls())
+library(survival)
 
-#load("adtte.RData")
-#surv_obj <- Surv(adtte$time_months, adtte$status)
+load("adtte.RData")
+surv_obj <- Surv(adtte$time_months, adtte$status)
 
 
 # ============================================================
 # 基准：主分析（回顾，便于对比）
 # ============================================================
-#cox_primary <- coxph(
-#  surv_obj ~ rx + strata(node4) + age + sex + extent,
-#  data = adtte, ties = "efron"
-#)
+cox_primary <- coxph(
+  surv_obj ~ rx + strata(node4) + age + sex + extent,
+  data = adtte, ties = "efron"
+)
 ci0 <- summary(cox_primary)$conf.int["rxLev+5FU", ]
 p0  <- summary(cox_primary)$coefficients["rxLev+5FU", "Pr(>|z|)"]
 
