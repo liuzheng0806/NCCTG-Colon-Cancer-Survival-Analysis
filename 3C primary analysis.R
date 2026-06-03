@@ -203,6 +203,15 @@ mtext(side = 1, line = 4.8, at = -8, text = "Lev+5FU", cex = 0.8,
 mtext(side = 1, line = 6.2, at = -8, text = "No. at risk:", cex = 0.8,
       adj = 0)
 
-cat("\nFigure 1 已保存：Figure1_KM_curve.pdf\n")
 
 cat("\n=== 3-C 完成 ===\n")
+
+library(survminer)
+ggsurvplot(km_fit, data = adtte,
+           risk.table = TRUE,        # 自动 number-at-risk 表
+           pval = TRUE,              # 自动标 p
+           conf.int = TRUE,
+           palette = c("#1E2761", "#3B6FD4"),  # 对上你PPT的navy配色
+           xlab = "Time (months)", ylab = "Recurrence-Free Survival",
+           legend.labs = c("Obs", "Lev+5FU"),
+           risk.table.height = 0.25)
